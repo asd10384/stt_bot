@@ -1,0 +1,12 @@
+{
+"type":"service_account",
+"project_id":"namil-discord-bot",
+"private_key_id":"dac681286398f7f1ddad2bf4407059559449dc92",
+"private_key":"-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQC0DMNFYdUqR7bw\nXsZTqMK0aiyQj3SrfGOCfEMRAPWsQ1YYhitJVRBPLChLERZDcAXpUNKJwcd7G8Y7\nEgWMlCYE11MY5tN/sy8GD27Fv8rh0PSEC07XLNZTKnK7ctNS1/K2zLY5jrgzOmNh\n8crItqgJzvgChCszNwKXmC3BwrBRD38hp//fcHTy9PQQeyxTuYXwdrAXguhx4sDW\naNexAeP2Nk5iErXBW65N0mEUAtWCRZFAPhpJlQhGgIzEmIpDlGhHLCL2siycXNuj\nL3+MCCSZOEQutGeqD5Q4XNQvt/GalQakvCcBa5hQZpR7/buvbD/hBdJaHXZoxA35\nN53BhG6pAgMBAAECggEACxsgbmau+ekriR8nd6CYxf0om5Alv7AwCSv2DRX0kXgj\n1uZrxB25oFCWea7noyhFTRN9sR6hWeAoNZuSeQ3oXHMVvpr6X82jMGoCSLNgZdZ4\nRq7V4aLz43RiWFqoW1tTrt/ou5solIxc9f0up3vQ2K4KEUmqyoFxqP0rkWCbdJx3\n5oEwWzEDVv06RWUaTiDvuzN5uIwfwe0PXsaNpuESswqDTKsU8lldj4jO4DS/jfK6\naYowD4864JCqgeaY68n8SR9893/Ghs1s0NHoz+oO9oCbhKqeedaaNGpxdxLPR1q8\niBrLSTZ6vTTZiCeXhBMQ9K6DDThVs2m4hHnCgYAtiwKBgQDzc1iMmGstcOd5YSIZ\nLac1z3XUHqWWKX/0+m3Lo1VUGg4c347Ndytr8TBONtjL5FrIwJOmu11bL6fgSO4u\nD+Tfw4H1tbk84BB+yGCcDFtfyGA+ajmmYqwGKetXmlQXOI7L5KRhLUAx68tVCRYg\nEtXoEbGU4LWRkGt7gr8HDptbgwKBgQC9VMKWfrGG9jC8aShlLKRq6FgY7E3Ng6PY\noVAZnBUkSqZBlVzTxrOa/pnAeXKgKis6N5/24WEYmZ08lGt0t3mzUQyMwH95LqN2\nM6RTD4fbWz2pSuH4H3TG9GgO9pRvMPn7n43CF5CBO1/1YzEWlRwGUuSssZWOzKrG\ncSJOfUrZYwKBgQCoMcK1sAAsLtrdUyxZtN7XIHPJjzrbmeRbfkEo9blYF4A0lod0\nkKahNssm3mG9zBCkrdfU05HWFACpxfk4PabkqZA6D8jgs/TxgsKsTSU78ZX8ySr3\nNyieQYvkxCzgtiSB3X9r2/WEB+I858AvfJPod4D22KDY5qw7csNDvuW6vQKBgFFu\nz3Mjcv/1i+i94h4CIYXKAXpWyPAIGsTmPSmGtKEzamby80YzRLT5pO/gTKkO+iDE\nJA1vyu9lwvd3bvB4qeOyjI9NjIZ2xN/mPltrZqe2isLx7ldmUDfyj39AF3/rtNnB\nOpusvv6WpyNIUqi/4ZnmtWyBxS3yYdGQf4z63uK5AoGAP1tKgWcSbjtz7ysj33Yq\nbQpWBzHbML3eR6YUCx3YuktnKKtz+B0zj8fjJoeqU5812fqi+tC3e6fl6kFM3w+z\nqUJbSVsQs1L6Cs0lgCBb9HuVntjNjMO92DTSp/aXxepFQGJFsfCP4TgH+mII/hof\nQeJTmoV3uF5vthNhfbSscRg=\n-----END PRIVATE KEY-----\n",
+"client_email":"speech-to-text@namil-discord-bot.iam.gserviceaccount.com",
+"client_id":"115424713107388896393",
+"auth_uri":"https://accounts.google.com/o/oauth2/auth",
+"token_uri":"https://oauth2.googleapis.com/token",
+"auth_provider_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs",
+"client_x509_cert_url":"https://www.googleapis.com/oauth2/v1/certs"
+}
