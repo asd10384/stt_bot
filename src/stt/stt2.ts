@@ -1,12 +1,11 @@
-import { AudioReceiveStream, createAudioResource, EndBehaviorType, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
+import { AudioReceiveStream, createAudioResource, EndBehaviorType, entersState, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import { GuildChannel, GuildMember } from "discord.js";
-import { I, M } from "../aliases/discord.js.js";
+import { I, M } from "../aliases/discord.js";
 import { sttgetkeyfile } from "./googleapi";
 import { SpeechClient } from "@google-cloud/speech";
 import run from "./run.js";
-import { createWriteStream, writeFileSync } from "fs";
-import prism from "prism-media";
-import tts from "./tts.js";
+import { createReadStream, createWriteStream, writeFileSync } from "fs";
+import { opus } from "prism-media";
 
 sttgetkeyfile();
 const sttclient = new SpeechClient({
@@ -17,7 +16,7 @@ const sttclient = new SpeechClient({
 
 export default async function start(message: M | I, channel: GuildChannel) {
   const connection = joinVoiceChannel({
-    adapterCreator: message.guild!.voiceAdapterCreator,
+    adapterCreator: channel.guild.voiceAdapterCreator,
     channelId: channel.id,
     guildId: message.guildId!
   });
@@ -25,36 +24,38 @@ export default async function start(message: M | I, channel: GuildChannel) {
 }
 
 async function stt(message: M | I, connection: VoiceConnection) {
+  await entersState(connection, VoiceConnectionStatus.Ready, 20e3);
   connection.receiver.speaking.on("start", async (userId) => {
-    console.log(userId);
     const member = message.guild!.members.cache.get(userId);
     if (!member || member.user.bot) return;
     const audioStream = connection.receiver.subscribe(userId, {
       end: {
         behavior: EndBehaviorType.AfterSilence,
-        duration: 250
+        duration: 350
       }
     });
+    var dd = createWriteStream('test1');
     let bufferlist: any[] = [];
     audioStream.on("data", (data) => {
+      dd.write(data);
       bufferlist.push(data);
     });
     audioStream.on("end", async () => {
-      console.log(1);
+      dd.end(() => {console.log("end")});
       let buffer = Buffer.concat(bufferlist);
       const duration = buffer.length / 10500;
       // 20 secounds max dur
-      console.log(duration);
+      console.log(userId, duration);
       if (duration < 1.0) return;
       try {
-        console.log(3);
         let new_buffer = await convert_audio(buffer);
-        console.log(4);
         if (!new_buffer) return;
-        let out = await transform(buffer, member);
-        console.log(5);
+        writeFileSync("test2", new_buffer);
+        createReadStream('test2')
+          .pipe(new opus.Decoder({ frameSize: 960, channels: 2, rate: 48000 }))
+          .pipe(createWriteStream('test2.pcm'));
+        let out = await transform(new_buffer, member);
         if (out != null) cmd(message, member, out);
-        console.log(6);
       } catch (err) {
         console.log(err);
       }
@@ -78,7 +79,7 @@ async function transform(buffer: Buffer, member: GuildMember) {
       audio: { content: buffer },
       config: {
         encoding: "LINEAR16",
-        sampleRateHertz: 24000,
+        sampleRateHertz: 48000,
         languageCode: "ko-KR"
       }
     });
