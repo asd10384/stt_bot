@@ -2,6 +2,7 @@ import { client } from "..";
 import { check_permission as ckper, embed_permission as emper } from "../function/permission";
 import { Command } from "../interfaces/Command";
 import { I, D } from "../aliases/discord.js";
+import { getVoiceConnection } from "@discordjs/voice";
 import { GuildChannel, GuildMember, Message, MessageActionRow, MessageButton } from "discord.js";
 import MDB from "../database/Mongodb";
 import start from "../stt/stt";
@@ -59,6 +60,16 @@ export default class SttCommand implements Command {
         name: "종료",
         description: "stt 종료"
       },
+      {
+        type: "SUB_COMMAND",
+        name: "채널생성",
+        description: "필수아님"
+      },
+      {
+        type: "SUB_COMMAND",
+        name: "채널제거",
+        description: "생성한 채널 제거"
+      }
     ]
   };
 
@@ -85,15 +96,38 @@ export default class SttCommand implements Command {
         ] });
       }
     }
+    if (cmd === "stop" || cmd === "종료") {
+      const connection = getVoiceConnection(interaction.guildId!);
+      connection?.disconnect();
+      return await interaction.editReply({ content: "done!" });
+    }
+    if (cmd === "채널생성") {
+      if (!(await ckper(interaction))) return await interaction.editReply({ embeds: [ emper ] });
+      return await interaction.editReply({ content: await this.makechannel(interaction) });
+    }
+    if (cmd === "채널제거") {
+      if (!(await ckper(interaction))) return await interaction.editReply({ embeds: [ emper ] });
+      return await interaction.editReply({ content: await this.delchannel(interaction) });
+    }
   }
-  async msgrun(message: Message, args: string[]) {
-    return message.channel.send({ embeds: [
-      client.mkembed({
-        title: `example`,
-        description: `example`,
-        footer: { text: `example` },
-        color: client.embedcolor
-      })
-    ] }).then(m => client.msgdelete(m, 2));
+
+  async makechannel(message: I): Promise<string> {
+    const guildDB = await MDB.get.guild(message);
+    const channel = await message.guild!.channels.create('STT메세지채널', {
+      type: "GUILD_TEXT",
+      topic: "/음성 종료 명령어로 종료가능"
+    });
+    guildDB!.sttchannelid = channel.id;
+    guildDB!.save().catch((err) => {});
+    return `<#${channel.id}> 채널 생성 완료`;
+  }
+  async delchannel(message: I): Promise<string> {
+    const guildDB = await MDB.get.guild(message);
+    const channel = message.guild?.channels.cache.get(guildDB!.sttchannelid);
+    const name = channel?.name;
+    if (channel) channel.delete();
+    guildDB!.sttchannelid = "";
+    guildDB!.save().catch((err) => {});
+    return `**${name}** 채널 제거 완료`;
   }
 }

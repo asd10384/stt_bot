@@ -36,24 +36,7 @@ async function guild_get(msg: M | I | VoiceState | PartialMessage | SelectMenuIn
         name: (msg.guild?.name) ? msg.guild.name : '',
         prefix: (process.env.PREFIX) ? process.env.PREFIX : 'm;',
         role: [],
-        channelId: '',
-        msgId: '',
-        playing: false,
-        nowplay: {
-          title: '',
-          author: '',
-          duration: '',
-          url: '',
-          image: '',
-          player: ''
-        },
-        queue: [],
-        options: {
-          volume: 70,
-          player: true,
-          listlimit: 300,
-          author: false
-        }
+        sttchannelid: ""
       };
       const guildDB: guild_type = new guild_model(data);
       await guildDB.save().catch((err: any) => console.error(err));

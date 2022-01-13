@@ -1,7 +1,6 @@
 import { ChatInputApplicationCommandData, Client, ClientEvents, ColorResolvable, EmbedFieldData, Message, MessageEmbed } from 'discord.js';
 import { config } from 'dotenv';
 import _ from '../consts';
-import { music } from "../database/obj/guild";
 
 config(); // .env 불러오기
 
@@ -22,7 +21,6 @@ export default class BotClient extends Client {
   ttstimertime: number;
   embedcolor: ColorResolvable;
   maxqueue: number;
-  music: Map<string, music>;
   /**
    * 클라이언트 생성
    * 
@@ -53,7 +51,6 @@ export default class BotClient extends Client {
     this.ttstimertime = (60) * 45; //분
     this.embedcolor = (process.env.EMBED_COLOR && process.env.EMBED_COLOR.length > 0) ? process.env.EMBED_COLOR as ColorResolvable : "ORANGE";
     this.maxqueue = 30;
-    this.music = new Map();
   }
 
   /**
@@ -87,16 +84,6 @@ export default class BotClient extends Client {
     return shardData.reduce((prev, curr) => prev + curr, 0);
   }
 
-  public musicdb = (guildId: string): music => {
-    if (this.music.get(guildId)) return this.music.get(guildId)!;
-    const output: music = {
-      playing: false,
-      nowplaying: null,
-      queue: []
-    };
-    this.music.set(guildId, output);
-    return output;
-  }
   mkembed(data: {
     title?: string,
     description?: string,

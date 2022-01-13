@@ -9,6 +9,7 @@ import { readdir, readFileSync, unlink } from "fs";
 import { Transform } from "stream";
 import { FileWriter } from "wav";
 import { OpusEncoder } from "@discordjs/opus";
+import sendmessage from "./sendmessage.js";
 
 sttgetkeyfile();
 const sttclient = new SpeechClient({
@@ -17,7 +18,6 @@ const sttclient = new SpeechClient({
 });
 const sttfilepath: string = (process.env.STT_FILE_PATH) ? (process.env.STT_FILE_PATH.endsWith('/')) ? process.env.STT_FILE_PATH : process.env.STT_FILE_PATH+'/' : '';
 const voice_prefix_list: string[] = (process.env.VOICE_PREFIX_LIST) ? eval(process.env.VOICE_PREFIX_LIST) : [ "테스트" ];
-const sttmessagechannelid: string | undefined = (process.env.STT_MESSAGE_CHANNEL_ID) ? process.env.STT_MESSAGE_CHANNEL_ID : undefined;
 voice_prefix_list.sort((a, b) => {
   return b.length - a.length;
 });
@@ -83,7 +83,7 @@ async function stt(message: M | I, connection: VoiceConnection) {
         let out = await transform(buffer, member, randomfilename);
         if (out != null && out.length != 0) {
           cmd(message, member, out);
-          if (sttmessagechannelid) sendmessage(message, member, out);
+          sendmessage(message, member, out);
         }
       } catch (err) {
         if (client.debug) console.log(err);
@@ -138,14 +138,5 @@ class OpusDecodingStream extends Transform {
   _transform(data: any, encoding: any, callback: any) {
     this.push(this.encoder.decode(data));
     callback();
-  }
-}
-
-function sendmessage(message: M | I, member: GuildMember, text: string) {
-  const chanenl = message.guild?.channels.cache.get(sttmessagechannelid!);
-  if (chanenl && (chanenl.type == "GUILD_TEXT")) {
-    chanenl.send({
-      content: `**${member.nickname ? member.nickname : member.user.username}** : ${text}`
-    });
   }
 }
