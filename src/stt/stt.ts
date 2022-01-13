@@ -1,4 +1,4 @@
-import { AudioReceiveStream, createAudioResource, EndBehaviorType, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
+import { AudioReceiveStream, createAudioResource, DiscordGatewayAdapterCreator, EndBehaviorType, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import { GuildChannel, GuildMember } from "discord.js";
 import { I, M } from "../aliases/discord.js";
 import { sttgetkeyfile } from "./googleapi";
@@ -17,7 +17,7 @@ const sttclient = new SpeechClient({
 
 export default async function start(message: M | I, channel: GuildChannel) {
   const connection = joinVoiceChannel({
-    adapterCreator: message.guild!.voiceAdapterCreator,
+    adapterCreator: message.guild!.voiceAdapterCreator as DiscordGatewayAdapterCreator,
     channelId: channel.id,
     guildId: message.guildId!
   });

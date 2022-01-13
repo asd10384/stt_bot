@@ -3,7 +3,7 @@ import { PM, M, I } from "../aliases/discord.js.js"
 import { nowplay } from "../database/obj/guild";
 import ytsr from "ytsr";
 import ytdl from "ytdl-core";
-import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, demuxProbe, entersState, getVoiceConnection, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
+import { AudioPlayer, AudioPlayerStatus, createAudioPlayer, createAudioResource, demuxProbe, DiscordGatewayAdapterCreator, entersState, getVoiceConnection, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import getchannel from "./getchannel";
 import MDB from "../database/Mongodb";
 import setmsg from "./msg";
@@ -67,7 +67,7 @@ export async function play(message: M | PM, getsearch?: ytsr.Video) {
     client.music.set(message.guildId!, musicDB);
     setmsg(message);
     const connection = joinVoiceChannel({
-      adapterCreator: message.guild?.voiceAdapterCreator!,
+      adapterCreator: message.guild?.voiceAdapterCreator! as DiscordGatewayAdapterCreator,
       guildId: message.guildId!,
       channelId: voicechannel.id
     });

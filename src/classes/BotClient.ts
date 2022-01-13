@@ -51,7 +51,7 @@ export default class BotClient extends Client {
     };
     this.ttstimer = new Map<string, { start: boolean, time: number }>();
     this.ttstimertime = (60) * 45; //분
-    this.embedcolor = "ORANGE";
+    this.embedcolor = (process.env.EMBED_COLOR && process.env.EMBED_COLOR.length > 0) ? process.env.EMBED_COLOR as ColorResolvable : "ORANGE";
     this.maxqueue = 30;
     this.music = new Map();
   }
@@ -110,17 +110,17 @@ export default class BotClient extends Client {
     footer?: { text: string, iconURL?: string },
     color?: ColorResolvable
   }): MessageEmbed {
-    const embed = new MessageEmbed();
+    const embed = new MessageEmbed().setColor(this.embedcolor);
     if (data.title) embed.setTitle(data.title);
     if (data.description) embed.setDescription(data.description);
     if (data.url) embed.setURL(data.url);
     if (data.image) embed.setImage(data.image);
     if (data.thumbnail) embed.setThumbnail(data.thumbnail);
-    if (data.author) embed.setAuthor(data.author.name, data.author.iconURL, data.author.url);
+    if (data.author) embed.setAuthor({ name: data.author.name, iconURL: data.author.iconURL, url: data.author.url });
     if (data.addField) embed.addField(data.addField.name, data.addField.value, data.addField.inline);
     if (data.addFields) embed.addFields(data.addFields);
     if (data.timestamp) embed.setTimestamp(data.timestamp);
-    if (data.footer) embed.setFooter(data.footer.text, data.footer.iconURL);
+    if (data.footer) embed.setFooter({ text: data.footer.text, iconURL: data.footer.iconURL });
     if (data.color) embed.setColor(data.color);
     return embed;
   }

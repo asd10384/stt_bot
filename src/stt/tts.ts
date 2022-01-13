@@ -18,8 +18,8 @@ const fileformat: {
   ttsformat: 'MP3',
   fileformat: 'mp3'
 };
-let ttsfilelist: string[] = [];
 
+const randomfile: Set<string> = new Set();
 readdir(ttsfilepath, (err, files) => {
   if (err) console.error(err);
   files.forEach((file) => {
@@ -28,30 +28,34 @@ readdir(ttsfilepath, (err, files) => {
     });
   });
 });
-setInterval(() => {
-  const files = readdirSync(ttsfilepath);
-  if (!files || files.length < ttsfilemaxlength+1) return;
-  for (let i=0; i<files.length-ttsfilemaxlength; i++) {
-    let filename = ttsfilelist.shift();
-    unlink(ttsfilepath+filename+'.'+fileformat.fileformat, (err) => {
-      if (err) return;
-    });
-  }
-}, 1000 * 15);
 
 export default async function tts(guildId: string, text: string) {
   const connection = getVoiceConnection(guildId);
   if (!connection) return undefined;
   const Player = createAudioPlayer();
   const subscription = connection.subscribe(Player);
-  const filename = (Math.random() * Number(guildId)).toString().replace('.','');
-  const file = await makefile(filename, text);
+  let randomfilename = Math.random().toString(36).replace(/0?\./g,"");
+  while (true) {
+    if (randomfile.has(randomfilename)) {
+      randomfilename = Math.random().toString(36).replace(/0?\./g,"");
+    } else {
+      randomfile.add(randomfilename);
+      break;
+    }
+  }
+  const file = await makefile(randomfilename, text);
   if (!file) return undefined;
   const resource = createAudioResource(file, {
     inlineVolume: true
   });
   resource.volume?.setVolume(0.7);
   Player.play(resource);
+  setTimeout(() => {
+    unlink(ttsfilepath+randomfilename+fileformat.fileformat, (err) => {
+      randomfile.delete(randomfilename);
+      if (err) return;
+    });
+  })
   return subscription;
 }
 
@@ -60,7 +64,6 @@ async function makefile(fileURL: string, text: string): Promise<string | undefin
   if (!output) return undefined;
   let filename = `${ttsfilepath}${fileURL}.${fileformat.fileformat}`;
   writeFileSync(filename, output);
-  ttsfilelist.push(fileURL);
   return filename;
 }
 

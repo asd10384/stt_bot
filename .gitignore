@@ -23,4 +23,7 @@ dist/
 
 googlettsapi.json
 
-sound/ttssound/*
+sounds/
+
+sttgooglettsapi.json
+ttsgooglettsapi.json
