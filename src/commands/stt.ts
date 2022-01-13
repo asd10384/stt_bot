@@ -4,7 +4,7 @@ import { Command } from "../interfaces/Command";
 import { I, D } from "../aliases/discord.js";
 import { GuildChannel, GuildMember, Message, MessageActionRow, MessageButton } from "discord.js";
 import MDB from "../database/Mongodb";
-import start from "../stt/stt2";
+import start from "../stt/stt";
 
 /**
  * DB
