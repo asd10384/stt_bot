@@ -9,7 +9,6 @@ const ttsclient = new TextToSpeechClient({
   fallback: false
 });
 
-const ttsfilemaxlength: number = 8;
 const ttsfilepath: string = (process.env.TTS_FILE_PATH) ? (process.env.TTS_FILE_PATH.endsWith('/')) ? process.env.TTS_FILE_PATH : process.env.TTS_FILE_PATH+'/' : '';
 const fileformat: {
   ttsformat: "AUDIO_ENCODING_UNSPECIFIED" | "LINEAR16" | "MP3" | "OGG_OPUS",
@@ -55,7 +54,7 @@ export default async function tts(guildId: string, text: string) {
       randomfile.delete(randomfilename);
       if (err) return;
     });
-  })
+  }, 1500);
   return subscription;
 }
 

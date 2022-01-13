@@ -1,10 +1,11 @@
-import { AudioReceiveStream, createAudioResource, DiscordGatewayAdapterCreator, EndBehaviorType, entersState, joinVoiceChannel, StreamType, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
+import { client } from "../index.js";
+import { DiscordGatewayAdapterCreator, EndBehaviorType, entersState, joinVoiceChannel, VoiceConnection, VoiceConnectionStatus } from "@discordjs/voice";
 import { GuildChannel, GuildMember } from "discord.js";
 import { I, M } from "../aliases/discord.js.js";
 import { sttgetkeyfile } from "./googleapi";
 import { SpeechClient } from "@google-cloud/speech";
 import run from "./run.js";
-import { createWriteStream, readdir, readFileSync, unlink, writeFileSync } from "fs";
+import { readdir, readFileSync, unlink } from "fs";
 import { Transform } from "stream";
 import { FileWriter } from "wav";
 import { OpusEncoder } from "@discordjs/opus";
@@ -15,7 +16,11 @@ const sttclient = new SpeechClient({
   fallback: false
 });
 const sttfilepath: string = (process.env.STT_FILE_PATH) ? (process.env.STT_FILE_PATH.endsWith('/')) ? process.env.STT_FILE_PATH : process.env.STT_FILE_PATH+'/' : '';
-const voice_prefix: string = (process.env.VOICE_PREFIX) ? process.env.VOICE_PREFIX : '테스트';
+const voice_prefix_list: string[] = (process.env.VOICE_PREFIX_LIST) ? eval(process.env.VOICE_PREFIX_LIST) : [ "테스트" ];
+const sttmessagechannelid: string | undefined = (process.env.STT_MESSAGE_CHANNEL_ID) ? process.env.STT_MESSAGE_CHANNEL_ID : undefined;
+voice_prefix_list.sort((a, b) => {
+  return b.length - a.length;
+});
 
 readdir(sttfilepath, (err, files) => {
   if (err) console.error(err);
@@ -41,7 +46,7 @@ async function stt(message: M | I, connection: VoiceConnection) {
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId) => {
     const member = message.guild!.members.cache.get(userId);
-    if (!member || member.user.bot) return;
+    if (!member/* || member.user.bot*/) return;
     let randomfilename = Math.random().toString(36).replace(/0?\./g,"");
     while (true) {
       if (randomfile.has(randomfilename)) {
@@ -64,8 +69,8 @@ async function stt(message: M | I, connection: VoiceConnection) {
     audioStream.on("end", async () => {
       const buffer = readFileSync(`${sttfilepath}/${randomfilename}.wav`);
       const duration = buffer.length / 16000 / 2;
-      console.log(member.nickname ? member.nickname : member.user.username, duration);
-      if (duration < 0.8) {
+      if (client.debug) console.log(member.nickname ? member.nickname : member.user.username, duration);
+      if (duration < 0.815) {
         setTimeout(() => {
           unlink(sttfilepath+randomfilename+".wav", (err) => {
             randomfile.delete(randomfilename);
@@ -76,20 +81,24 @@ async function stt(message: M | I, connection: VoiceConnection) {
       }
       try {
         let out = await transform(buffer, member, randomfilename);
-        if (out != null) cmd(message, member, out);
+        if (out != null && out.length != 0) {
+          cmd(message, member, out);
+          if (sttmessagechannelid) sendmessage(message, member, out);
+        }
       } catch (err) {
-        console.log(err);
+        if (client.debug) console.log(err);
       }
     });
   });
 }
 
 async function cmd(message: M | I, member: GuildMember, text: string) {
-  if (!text || !text.length) return;
-
-  if (text.trim().startsWith(voice_prefix)) {
-    const args = text.trim().slice(voice_prefix.length).trim().split(/ +/g);
-    return run(message, args, member);
+  for (let voice_prefix of voice_prefix_list) {
+    if (text.trim().startsWith(voice_prefix)) {
+      const args = text.trim().slice(voice_prefix.length).trim().split(/ +/g);
+      run(message, args, member);
+      break;
+    }
   }
 }
 
@@ -106,7 +115,7 @@ async function transform(buffer: Buffer, member: GuildMember, filename: string) 
     const transcription = response.results!
       .map(result => result.alternatives![0].transcript)
       .join("\n");
-    console.log(`${member.nickname ? member.nickname : member.user.username} 메세지:`, transcription);
+    if (client.debug) console.log(`${member.nickname ? member.nickname : member.user.username} 메세지:`, transcription);
     setTimeout(() => {
       unlink(sttfilepath+filename+".wav", (err) => {
         randomfile.delete(filename);
@@ -115,22 +124,7 @@ async function transform(buffer: Buffer, member: GuildMember, filename: string) 
     }, 1500);
     return transcription;
   } catch (err) {
-    console.log(err);
-  }
-}
-
-async function convert_audio(buffer: Buffer) {
-  try {
-    // stereo to mono channel
-    const data = new Int16Array(buffer);
-    const ndata = new Int16Array(data.length/2);
-    for (let i=0, j=0; i<data.length; i+=4) {
-      ndata[j++] = data[i];
-      ndata[j++] = data[i+1];
-    }
-    return Buffer.from(ndata);
-  } catch (err) {
-    console.log(err);
+    if (client.debug) console.log(err);
   }
 }
 
@@ -144,5 +138,14 @@ class OpusDecodingStream extends Transform {
   _transform(data: any, encoding: any, callback: any) {
     this.push(this.encoder.decode(data));
     callback();
+  }
+}
+
+function sendmessage(message: M | I, member: GuildMember, text: string) {
+  const chanenl = message.guild?.channels.cache.get(sttmessagechannelid!);
+  if (chanenl && (chanenl.type == "GUILD_TEXT")) {
+    chanenl.send({
+      content: `**${member.nickname ? member.nickname : member.user.username}** : ${text}`
+    });
   }
 }

@@ -11,6 +11,6 @@ export default async function run(message: M | I, args: string[], member: GuildM
   if (args[0] === "안녕") {
     saylist = [ "안녕하세요." ];
   }
-  if (saytext.length > 0 && saylist.length > 0) saytext = saylist[Math.floor(Math.random() * saylist.length-1)];
+  if (saylist.length > 0 && saytext.length === 0) saytext = saylist[Math.floor(Math.random() * saylist.length)];
   return tts(message.guildId!, saytext);
 }
