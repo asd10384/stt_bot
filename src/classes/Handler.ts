@@ -5,7 +5,6 @@ import BotClient from './BotClient';
 import { Command } from '../interfaces/Command';
 import { client } from '..';
 import MDB from "../database/Mongodb";
-import music from '../music/music';
 
 export default class SlashHandler {
   public commands: Collection<string, Command>;
@@ -73,23 +72,6 @@ export default class SlashHandler {
       } finally {
         client.msgdelete(message, 0);
       }
-    } else {
-      MDB.get.guild(message).then((guildID) => {
-        if (guildID!.channelId === message.channelId) {
-          client.msgdelete(message, 350, true);
-          if (this.cooldown[`${message.guildId!}.${message.author.id}`] && this.cooldown[`${message.guildId!}.${message.author.id}`] > Date.now()) {
-            message.channel.send({ embeds: [
-              client.mkembed({
-                description: `**<@${message.author.id}>님 너무 빠르게 입력했습니다.**\n${Math.round(((this.cooldown[`${message.guildId!}.${message.author.id}`] - Date.now()) / 1000) * 100) / 100}초 뒤에 다시 사용해주세요.`,
-                color: 'DARK_RED'
-              })
-            ] }).then(m => client.msgdelete(m, 0.75));
-          } else {
-            this.cooldown[`${message.guildId!}.${message.author.id}`] = Date.now() + 2 * 1000;
-            music(message, message.content.trim());
-          }
-        }
-      });
     }
   }
 

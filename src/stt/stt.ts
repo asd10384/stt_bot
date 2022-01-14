@@ -46,7 +46,7 @@ async function stt(message: M | I, connection: VoiceConnection) {
   const receiver = connection.receiver;
   receiver.speaking.on("start", async (userId) => {
     const member = message.guild!.members.cache.get(userId);
-    if (!member/* || member.user.bot*/) return;
+    if (!member || member.user.bot) return;
     let randomfilename = Math.random().toString(36).replace(/0?\./g,"");
     while (true) {
       if (randomfile.has(randomfilename)) {
@@ -59,7 +59,7 @@ async function stt(message: M | I, connection: VoiceConnection) {
     const audioStream = connection.receiver.subscribe(userId, {
       end: {
         behavior: EndBehaviorType.AfterSilence,
-        duration: 250
+        duration: 200
       }
     }).pipe(new OpusDecodingStream({}, new OpusEncoder(16000, 1)))
       .pipe(new FileWriter(`${sttfilepath}/${randomfilename}.wav`, {

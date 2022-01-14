@@ -1,33 +1,13 @@
-// Imports the Google Cloud client library
-import speech from "@google-cloud/speech";
-import { readFileSync } from "fs";
+import { readFileSync, writeFileSync } from "fs";
+import axios from "axios";
 
-// Creates a client
-const client = new speech.SpeechClient({
-  keyFile: 'sttgooglettsapi.json',
-  fallback: false
-});
+// 사이트 -> buffer
 
-async function quickstart() {
-  // The path to the remote LINEAR16 file
-  const file = readFileSync(`testmsg.wav`);
-
-  // The audio file's encoding, sample rate in hertz, and BCP-47 language code
-
-  // Detects speech in the audio file
-  const [response] = await client.recognize({
-    audio: {
-      content: file.toString("base64")
-    },
-    config: {
-      encoding: "LINEAR16",
-      sampleRateHertz: 24000,
-      languageCode: "ko-KR"
-    }
-  });
-  const transcription = response.results!
-    .map((result) => result!.alternatives![0].transcript!)
-    .join('\n');
-  console.log(`Transcription: ${transcription}`);
-}
-quickstart();
+const url = "https://m.search.naver.com/p/csearch/ocontent/util/ttsProxy.naver?service=nco_translate&from=pc_search&speech_fmt=mp3&speed=0&passportKey=c3056ee62fe158036f13994a465b015c5aea1893&speaker=mijin&text=%ed%85%8c%ec%8a%a4%ed%8a%b8";
+const url2 = `https://signaturesite.netlify.app/file/${encodeURIComponent("찬구")}/${encodeURIComponent("ㅋㅋ뤀삥뽕")}.mp3`;
+(async () => {
+  const t = await axios.get(url2, { responseType: "arraybuffer" });
+  const buffer = Buffer.from(t.data, "utf8");
+  writeFileSync("test.mp3", buffer);
+  console.log("done!");
+})();
