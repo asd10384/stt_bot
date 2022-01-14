@@ -6,6 +6,7 @@ import { getVoiceConnection } from "@discordjs/voice";
 import { GuildChannel, GuildMember, Message, MessageActionRow, MessageButton } from "discord.js";
 import MDB from "../database/Mongodb";
 import start from "../stt/stt";
+import { restartsignature } from "../stt/cmd";
 
 /**
  * DB
@@ -69,6 +70,11 @@ export default class SttCommand implements Command {
         type: "SUB_COMMAND",
         name: "채널제거",
         description: "생성한 채널 제거"
+      },
+      {
+        type: "SUB_COMMAND",
+        name: "리로드",
+        description: "시그니쳐 리로드"
       }
     ]
   };
@@ -109,6 +115,9 @@ export default class SttCommand implements Command {
       if (!(await ckper(interaction))) return await interaction.editReply({ embeds: [ emper ] });
       return await interaction.editReply({ content: await this.delchannel(interaction) });
     }
+    if (cmd === "리로드") {
+      return await interaction.editReply({ content: await this.signature() });
+    }
   }
 
   async makechannel(message: I): Promise<string> {
@@ -129,5 +138,10 @@ export default class SttCommand implements Command {
     guildDB!.sttchannelid = "";
     guildDB!.save().catch((err) => {});
     return `**${name}** 채널 제거 완료`;
+  }
+
+  async signature(): Promise<string> {
+    await restartsignature();
+    return "done!";
   }
 }

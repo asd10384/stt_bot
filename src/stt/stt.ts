@@ -4,12 +4,14 @@ import { GuildChannel, GuildMember } from "discord.js";
 import { I, M } from "../aliases/discord.js.js";
 import { sttgetkeyfile } from "./googleapi";
 import { SpeechClient } from "@google-cloud/speech";
-import run from "./run.js";
 import { readdir, readFileSync, unlink } from "fs";
 import { Transform } from "stream";
 import { FileWriter } from "wav";
 import { OpusEncoder } from "@discordjs/opus";
 import sendmessage from "./sendmessage.js";
+import cmd from "./cmd.js";
+import { config } from "dotenv";
+config();
 
 sttgetkeyfile();
 const sttclient = new SpeechClient({
@@ -17,10 +19,6 @@ const sttclient = new SpeechClient({
   fallback: false
 });
 const sttfilepath: string = (process.env.STT_FILE_PATH) ? (process.env.STT_FILE_PATH.endsWith('/')) ? process.env.STT_FILE_PATH : process.env.STT_FILE_PATH+'/' : '';
-const voice_prefix_list: string[] = (process.env.VOICE_PREFIX_LIST) ? eval(process.env.VOICE_PREFIX_LIST) : [ "테스트" ];
-voice_prefix_list.sort((a, b) => {
-  return b.length - a.length;
-});
 
 readdir(sttfilepath, (err, files) => {
   if (err) console.error(err);
@@ -90,16 +88,6 @@ async function stt(message: M | I, connection: VoiceConnection) {
       }
     });
   });
-}
-
-async function cmd(message: M | I, member: GuildMember, text: string) {
-  for (let voice_prefix of voice_prefix_list) {
-    if (text.trim().startsWith(voice_prefix)) {
-      const args = text.trim().slice(voice_prefix.length).trim().split(/ +/g);
-      run(message, args, member);
-      break;
-    }
-  }
 }
 
 async function transform(buffer: Buffer, member: GuildMember, filename: string) {

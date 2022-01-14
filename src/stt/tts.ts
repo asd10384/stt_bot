@@ -2,6 +2,8 @@ import { ttsgetkeyfile } from "./googleapi";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { createAudioPlayer, createAudioResource, getVoiceConnection } from "@discordjs/voice";
 import { readdir, readdirSync, unlink, writeFileSync } from "fs";
+import axios from "axios";
+import { signaturesiteurl } from "./getsignature";
 
 ttsgetkeyfile();
 const ttsclient = new TextToSpeechClient({
@@ -28,7 +30,7 @@ readdir(ttsfilepath, (err, files) => {
   });
 });
 
-export default async function tts(guildId: string, text: string) {
+export default async function tts(guildId: string, text: string, mp3file?: boolean) {
   const connection = getVoiceConnection(guildId);
   if (!connection) return undefined;
   const Player = createAudioPlayer();
@@ -42,7 +44,15 @@ export default async function tts(guildId: string, text: string) {
       break;
     }
   }
-  const file = await makefile(randomfilename, text);
+  let file: string | undefined = undefined;
+  if (mp3file) {
+    if (!text) return undefined;
+    const mp3 = await axios.get(`${signaturesiteurl}/file/${encodeURI(text)}.mp3`, { responseType: "arraybuffer" });
+    const buffer = Buffer.from(mp3.data);
+    file = await makefile(randomfilename, undefined, buffer);
+  } else {
+    file = await makefile(randomfilename, text);
+  }
   if (!file) return undefined;
   const resource = createAudioResource(file, {
     inlineVolume: true
@@ -50,16 +60,23 @@ export default async function tts(guildId: string, text: string) {
   resource.volume?.setVolume(0.7);
   Player.play(resource);
   setTimeout(() => {
-    unlink(ttsfilepath+randomfilename+fileformat.fileformat, (err) => {
-      randomfile.delete(randomfilename);
-      if (err) return;
-    });
-  }, 1500);
+    if (file) {
+      unlink(file, (err) => {
+        randomfile.delete(randomfilename);
+        if (err) return;
+      });
+    }
+  }, 2500);
   return subscription;
 }
 
-async function makefile(fileURL: string, text: string): Promise<string | undefined> {
-  let output = await gettext(text);
+async function makefile(fileURL: string, text: string | undefined, buffer?: Buffer): Promise<string | undefined> {
+  let output: any = undefined;
+  if (text) {
+    output = await gettext(text);
+  } else {
+    output = buffer;
+  }
   if (!output) return undefined;
   let filename = `${ttsfilepath}${fileURL}.${fileformat.fileformat}`;
   writeFileSync(filename, output);
