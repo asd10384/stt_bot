@@ -38,7 +38,7 @@ function time() {
   const date = new Date();
   const hour = date.getHours();
   const min = date.getMinutes();
-  return `${hour}시 ${min}분`;
+  return `${hour > 12 ? "오후" : "오전"} ${hour > 12 ? hour-12 : hour}시 ${min}분`;
 }
 
 function search(text: string): string {
