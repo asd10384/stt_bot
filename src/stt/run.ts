@@ -18,6 +18,22 @@ export default async function run(message: M | I, args: string[], member: GuildM
   if (text === "죽어" || text === "뒤져") {
     saylist = [ "어떻게 그렇게 심한말을...", `${member.nickname ? member.nickname : member.user.username} 님 저는 죽지 않아요.` ];
   }
+  if (args.length >= 3 && parseFloat(args[0]) !== NaN && ["+", "-", "*", "나누기"].includes(args[1]) && (args[2].endsWith("은") || args[2].endsWith("는")) && parseFloat(args[2].slice(0,-1)) !== NaN) {
+    switch (args[1]) {
+      case "+":
+        saytext = `${args[0]} 더하기 ${args[2]} ${parseFloat(args[0]) + parseFloat(args[2].slice(0,-1))} 입니다.`;
+        break;
+      case "-":
+        saytext = `${args[0]} 빼기 ${args[2]} ${parseFloat(args[0]) - parseFloat(args[2].slice(0,-1))} 입니다.`;
+        break;
+      case "*":
+        saytext = `${args[0]} 곱하기 ${args[2]} ${parseFloat(args[0]) * parseFloat(args[2].slice(0,-1))} 입니다.`;
+        break;
+      case "나누기":
+        saytext = `${args[0]} 나누기 ${args[2]} ${parseFloat(args[0]) / parseFloat(args[2].slice(0,-1))} 입니다.`;
+        break;
+    }
+  }
   if (args[args.length-1] === "뭐야") {
     args.pop();
     if (!args || args.length === 0) return;

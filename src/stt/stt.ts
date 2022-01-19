@@ -68,7 +68,7 @@ async function stt(message: M | I, connection: VoiceConnection) {
       const buffer = readFileSync(`${sttfilepath}/${randomfilename}.wav`);
       const duration = buffer.length / 16000 / 2;
       if (client.debug) console.log(member.nickname ? member.nickname : member.user.username, duration);
-      if (duration < 0.5) {
+      if (duration < 0.7) {
         setTimeout(() => {
           unlink(sttfilepath+randomfilename+".wav", (err) => {
             randomfile.delete(randomfilename);
