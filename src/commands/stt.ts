@@ -1,147 +1,81 @@
-import { client } from "..";
-import { check_permission as ckper, embed_permission as emper } from "../function/permission";
+import { client } from "../index";
 import { Command } from "../interfaces/Command";
-import { I, D } from "../aliases/discord.js";
+// import { Logger } from "../utils/Logger";
+import { Message, EmbedBuilder, ApplicationCommandOptionType, ChatInputApplicationCommandData, CommandInteraction, ChannelType, Guild, VoiceChannel } from "discord.js";
 import { getVoiceConnection } from "@discordjs/voice";
-import { GuildChannel, GuildMember, Message, MessageActionRow, MessageButton } from "discord.js";
-import MDB from "../database/Mongodb";
-import start from "../stt/stt";
-import { restartsignature } from "../stt/cmd";
+// import { check_permission as ckper, embed_permission as emper } from "../utils/Permission";
+// import { QDB } from "../databases/Quickdb";
 
 /**
  * DB
- * let guildDB = await MDB.get.guild(interaction);
+ * let guildDB = await QDB.get(interaction.guild!);
  * 
  * check permission(role)
- * if (!(await ckper(interaction))) return await interaction.editReply({ embeds: [ emper ] });
+ * if (!(await ckper(interaction))) return await interaction.followUp({ embeds: [ emper ] });
  * if (!(await ckper(message))) return message.channel.send({ embeds: [ emper ] }).then(m => client.msgdelete(m, 1));
  */
 
-/** stt 명령어 */
-export default class SttCommand implements Command {
+export default class implements Command {
   /** 해당 명령어 설명 */
-  name = "음성";
+  name = "stt";
   visible = true;
-  description = "stt";
-  information = "빅스비나 시리같은 기능";
-  aliases = [ "stt" ];
-  metadata = <D>{
+  description = "speech to text";
+  information = "speech to text";
+  aliases: string[] = [];
+  metadata: ChatInputApplicationCommandData = {
     name: this.name,
     description: this.description,
     options: [
       {
-        type: "SUB_COMMAND",
+        type: ApplicationCommandOptionType.Subcommand,
         name: "start",
-        description: "stt start",
+        description: "start bot",
         options: [{
-          type: "CHANNEL",
+          type: ApplicationCommandOptionType.Channel,
+          channel_types: [ ChannelType.GuildVoice ],
           name: "channel",
-          description: "select channel",
-          channelTypes: [ "GUILD_VOICE", "GUILD_STAGE_VOICE" ]
+          description: "channel",
+          required: true
         }]
       },
       {
-        type: "SUB_COMMAND",
-        name: "시작",
-        description: "stt 시작",
-        options: [{
-          type: "CHANNEL",
-          name: "channel",
-          description: "특정채널에 접속",
-          channelTypes: [ "GUILD_VOICE", "GUILD_STAGE_VOICE" ]
-        }]
-      },
-      {
-        type: "SUB_COMMAND",
+        type: ApplicationCommandOptionType.Subcommand,
         name: "stop",
-        description: "stt stop"
-      },
-      {
-        type: "SUB_COMMAND",
-        name: "종료",
-        description: "stt 종료"
-      },
-      {
-        type: "SUB_COMMAND",
-        name: "채널생성",
-        description: "필수아님"
-      },
-      {
-        type: "SUB_COMMAND",
-        name: "채널제거",
-        description: "생성한 채널 제거"
-      },
-      {
-        type: "SUB_COMMAND",
-        name: "리로드",
-        description: "시그니쳐 리로드"
+        description: "stop bot"
       }
     ]
   };
+  msgmetadata?: { name: string; des: string; }[] = undefined;
 
   /** 실행되는 부분 */
-  async slashrun(interaction: I) {
-    const cmd = interaction.options.getSubcommand();
-    if (cmd === "start" || cmd === "시작") {
-      var channel = interaction.options.getChannel("channel");
-      if (channel) {
-        start(interaction, channel as GuildChannel);
-        return await interaction.editReply({ content: "done!" });
-      } else {
-        channel = (interaction.member as GuildMember).voice.channel;
-        if (!!channel) {
-          start(interaction, channel);
-          return await interaction.editReply({ content: "done!" });
-        }
-        return await interaction.editReply({ embeds: [
-          client.mkembed({
-            title: `\` 음성을 찾을수없음 \``,
-            description: `음성에 들어간뒤 사용해주세요.`,
-            color: "DARK_RED"
-          })
-        ] });
-      }
+  async slashRun(interaction: CommandInteraction) {
+    const cmd = interaction.options.data[0];
+    if (cmd.name === "start") {
+      const data = cmd.options ? cmd.options[0]?.channel : undefined;
+      if (data) return await interaction.followUp({ content: this.start(interaction.guild!, data as VoiceChannel) });
     }
-    if (cmd === "stop" || cmd === "종료") {
-      const connection = getVoiceConnection(interaction.guildId!);
-      connection?.disconnect();
-      return await interaction.editReply({ content: "done!" });
+    if (cmd.name === "stop") {
+      getVoiceConnection(interaction.guildId!)?.disconnect();
+      getVoiceConnection(interaction.guildId!)?.destroy();
+      return await interaction.followUp({ content: "done!" });
     }
-    if (cmd === "채널생성") {
-      if (!(await ckper(interaction))) return await interaction.editReply({ embeds: [ emper ] });
-      return await interaction.editReply({ content: await this.makechannel(interaction) });
-    }
-    if (cmd === "채널제거") {
-      if (!(await ckper(interaction))) return await interaction.editReply({ embeds: [ emper ] });
-      return await interaction.editReply({ content: await this.delchannel(interaction) });
-    }
-    if (cmd === "리로드") {
-      return await interaction.editReply({ content: await this.signature() });
-    }
+    return await interaction.followUp({ embeds: [ this.help() ] });
+  }
+  async messageRun(message: Message, _args: string[]) {
+    return message.channel.send({ embeds: [
+      client.mkembed({
+        title: `제작중...`,
+        color: "DarkRed"
+      })
+    ] }).then(m => client.msgdelete(m, 1));
   }
 
-  async makechannel(message: I): Promise<string> {
-    const guildDB = await MDB.get.guild(message);
-    const channel = await message.guild!.channels.create('STT메세지채널', {
-      type: "GUILD_TEXT",
-      topic: "/음성 종료 명령어로 종료가능"
-    });
-    guildDB!.sttchannelid = channel.id;
-    guildDB!.save().catch((err) => {});
-    return `<#${channel.id}> 채널 생성 완료`;
-  }
-  async delchannel(message: I): Promise<string> {
-    const guildDB = await MDB.get.guild(message);
-    const channel = message.guild?.channels.cache.get(guildDB!.sttchannelid);
-    const name = channel?.name;
-    if (channel) channel.delete();
-    guildDB!.sttchannelid = "";
-    guildDB!.save().catch((err) => {});
-    return `**${name}** 채널 제거 완료`;
+  help(): EmbedBuilder {
+    return client.help(this.metadata.name, this.metadata, this.msgmetadata)!;
   }
 
-  async signature(): Promise<string> {
-    await restartsignature();
+  start(guild: Guild, channel: VoiceChannel): string {
+    client.getSTT(guild).start(channel);
     return "done!";
   }
 }
