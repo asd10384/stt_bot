@@ -17,11 +17,36 @@ const LOG_CHANNELID = process.env.STT_TEXT_CHANNELID ? process.env.STT_TEXT_CHAN
 
 export class STT {
   guild: Guild;
-  TTS: TTS
+  TTS: TTS;
+  sttSameTime: number;
+  sttList: { channel: VoiceChannel; member: GuildMember; filePath: string; }[];
 
   constructor(guild: Guild) {
     this.guild = guild;
     this.TTS = new TTS(guild);
+    this.sttSameTime = 0;
+    this.sttList = [];
+
+    setInterval(async () => {
+      if (this.sttSameTime >= 3) return;
+      const fileData = this.sttList.shift();
+      if (fileData) {
+        this.sttSameTime += 1;
+        const { channel, filePath, member } = fileData;
+        // if (client.debug) Logger.log(`${member.nickname || member.user.username} : 음성 변환중 (${duration})`)
+        const text = await this.getSttText(filePath).catch(() => {
+          return undefined;
+        });
+        if (text != undefined && text.length > 0) {
+          if (text.startsWith("MBC 뉴스 ") && text.endsWith("입니다.")) return;
+          if (client.debug) Logger.log(`${member.nickname || member.user.username} : ${text}`);
+          this.logChannel(channel, member, text);
+          this.command(channel, text.split(/ +/g), member).catch(() => {});
+        }
+        // if (client.debug) Logger.log(`${member.nickname || member.user.username} : #내용없음`);
+        this.sttSameTime -= 1;
+      }
+    }, 1000);
   }
 
   async start(channel: VoiceChannel) {
@@ -34,13 +59,18 @@ export class STT {
     connection.setMaxListeners(0);
     connection.configureNetworking();
 
-    connection.on(VoiceConnectionStatus.Signalling, () => {
-      try {
+    connection.on("stateChange", (oldState, newState) => {
+      if (oldState.status === VoiceConnectionStatus.Ready && newState.status === VoiceConnectionStatus.Signalling) {
         connection.configureNetworking();
-      } catch {
-        setTimeout(() => {
-          connection.configureNetworking();
-        }, 100);
+        const oldNetworking = Reflect.get(oldState, 'networking');
+        const newNetworking = Reflect.get(newState, 'networking');
+        const networkStateChangeHandler = (_oldNetworkState: any, newNetworkState: any) => {
+          console.log(newNetworkState);
+          const newUdp = Reflect.get(newNetworkState, 'udp');
+          clearInterval(newUdp?.keepAliveInterval);
+        }
+        oldNetworking?.off('stateChange', networkStateChangeHandler);
+        newNetworking?.on('stateChange', networkStateChangeHandler);
       }
     });
 
@@ -86,21 +116,11 @@ export class STT {
           // if (client.debug) Logger.log(`${member.nickname || member.user.username} : 시간짧음 (${duration})`);
           return;
         }
-        try {
-          // if (client.debug) Logger.log(`${member.nickname || member.user.username} : 음성 변환중 (${duration})`)
-          let text = await this.getSttText(`${sttFilePath}/${randomFileName}.wav`).catch(() => {
-            return undefined;
-          });
-          if (text != undefined && text.length > 0) {
-            if (text.startsWith("MBC 뉴스 ") && text.endsWith("입니다.")) return;
-            if (client.debug) Logger.log(`${member.nickname || member.user.username} : ${text}`);
-            this.logChannel(channel, member, text);
-            this.command(channel, text.split(/ +/g), member);
-          }
-          // if (client.debug) Logger.log(`${member.nickname || member.user.username} : #내용없음`);
-        } catch (err) {
-          if (client.debug) console.log(err);
-        }
+        this.sttList.push({
+          channel: channel,
+          filePath: `${sttFilePath}/${randomFileName}.wav`,
+          member: member
+        });
       });
     });
   }

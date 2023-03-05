@@ -1,7 +1,7 @@
 import { client } from "../index";
 import { Command } from "../interfaces/Command";
 // import { Logger } from "../utils/Logger";
-import { Message, EmbedBuilder, ApplicationCommandOptionType, ChatInputApplicationCommandData, CommandInteraction, ChannelType, Guild, VoiceChannel } from "discord.js";
+import { Message, EmbedBuilder, ApplicationCommandOptionType, ChatInputApplicationCommandData, CommandInteraction, ChannelType, Guild, VoiceChannel, TextChannel } from "discord.js";
 import { getVoiceConnection } from "@discordjs/voice";
 // import { check_permission as ckper, embed_permission as emper } from "../utils/Permission";
 // import { QDB } from "../databases/Quickdb";
@@ -12,7 +12,7 @@ import { getVoiceConnection } from "@discordjs/voice";
  * 
  * check permission(role)
  * if (!(await ckper(interaction))) return await interaction.followUp({ embeds: [ emper ] });
- * if (!(await ckper(message))) return message.channel.send({ embeds: [ emper ] }).then(m => client.msgdelete(m, 1));
+ * if (!(await ckper(message))) return (message.channel as TextChannel).send({ embeds: [ emper ] }).then(m => client.msgdelete(m, 1));
  */
 
 export default class implements Command {
@@ -62,7 +62,7 @@ export default class implements Command {
     return await interaction.followUp({ embeds: [ this.help() ] });
   }
   async messageRun(message: Message, _args: string[]) {
-    return message.channel.send({ embeds: [
+    return (message.channel as TextChannel).send({ embeds: [
       client.mkembed({
         title: `제작중...`,
         color: "DarkRed"

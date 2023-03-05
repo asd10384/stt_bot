@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { createAudioPlayer, createAudioResource, DiscordGatewayAdapterCreator, entersState, joinVoiceChannel, PlayerSubscription, VoiceConnectionStatus } from "@discordjs/voice";
+import { createAudioPlayer, createAudioResource, DiscordGatewayAdapterCreator, entersState, joinVoiceChannel, PlayerSubscription, VoiceConnectionState, VoiceConnectionStatus } from "@discordjs/voice";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { Guild, VoiceChannel } from "discord.js";
 import { unlink, writeFileSync } from "fs";
@@ -60,6 +60,25 @@ export class TTS {
 
     connection.setMaxListeners(0);
     connection.configureNetworking();
+    connection.once("stateChange", (oldState: VoiceConnectionState, newState: VoiceConnectionState) => {
+      if (
+        oldState.status === VoiceConnectionStatus.Ready 
+        && newState.status === VoiceConnectionStatus.Signalling
+      ) {
+        console.log(oldState.subscription?.connection.joinConfig.channelId);
+        console.log(newState.subscription?.connection.joinConfig);
+        const oldNetworking = Reflect.get(oldState, 'networking');
+        const newNetworking = Reflect.get(newState, 'networking');
+        const networkStateChangeHandler = (_oldNetworkState: any, newNetworkState: any) => {
+          const newUdp = Reflect.get(newNetworkState, 'udp');
+          clearInterval(newUdp?.keepAliveInterval);
+        }
+        oldNetworking?.off('stateChange', networkStateChangeHandler);
+        newNetworking?.on('stateChange', networkStateChangeHandler);
+        connection.setMaxListeners(0);
+        connection.configureNetworking();
+      }
+    });
     
     try {
       await entersState(connection, VoiceConnectionStatus.Ready, 20e3);
