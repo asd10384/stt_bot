@@ -4,7 +4,7 @@ import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { Guild, VoiceChannel } from "discord.js";
 import { unlink, writeFileSync } from "fs";
 
-export const ttsFilePath: string = (process.env.TTS_FILE_PATH) ? (process.env.TTS_FILE_PATH.endsWith('/')) ? process.env.TTS_FILE_PATH.slice(0,-1) : process.env.TTS_FILE_PATH : '';
+export const ttsFilePath: string = (process.env.TTS_FILE_PATH) ? (process.env.TTS_FILE_PATH.endsWith('/')) ? process.env.TTS_FILE_PATH.slice(0, -1) : process.env.TTS_FILE_PATH : '';
 const ttsfilelist = new Set<string>();
 
 const ttsClient = new TextToSpeechClient({

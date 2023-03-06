@@ -11,7 +11,7 @@ import { Logger } from "../utils/Logger";
 
 const randomFile: Set<string> = new Set();
 
-export const sttFilePath: string = (process.env.STT_FILE_PATH) ? (process.env.STT_FILE_PATH.endsWith('/')) ? process.env.STT_FILE_PATH : process.env.STT_FILE_PATH+'/' : '';
+export const sttFilePath: string = (process.env.STT_FILE_PATH) ? (process.env.STT_FILE_PATH.endsWith('/')) ? process.env.STT_FILE_PATH.slice(0, -1) : process.env.STT_FILE_PATH : '';
 const LOG_SERVERID = process.env.STT_TEXT_SERVERID ? process.env.STT_TEXT_SERVERID : "";
 const LOG_CHANNELID = process.env.STT_TEXT_CHANNELID ? process.env.STT_TEXT_CHANNELID : "";
 
@@ -109,7 +109,7 @@ export class STT {
         const duration = buffer.length / 16000 / 2;
         if (duration < 0.82) {
           setTimeout(() => {
-            unlink(sttFilePath+randomFileName+".wav", (err) => {
+            unlink(sttFilePath+"/"+randomFileName+".wav", (err) => {
               randomFile.delete(randomFileName);
               if (err) return;
             });
