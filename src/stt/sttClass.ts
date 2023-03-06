@@ -39,6 +39,7 @@ export class STT {
         });
         if (text != undefined && text.length > 0) {
           if (text.startsWith("MBC 뉴스 ") && text.endsWith("입니다.")) return;
+          if (text === "감사합니다.") return;
           if (client.debug) Logger.log(`${member.nickname || member.user.username} : ${text}`);
           this.logChannel(channel, member, text);
           this.command(channel, text.split(/ +/g), member).catch(() => {});
