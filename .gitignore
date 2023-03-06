@@ -6,4 +6,5 @@ test*.ts
 old/
 googlettsapi.json
 sounds/
-python/
+*.zip
+*.m4a
