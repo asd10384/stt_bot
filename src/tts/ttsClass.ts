@@ -1,8 +1,8 @@
 import "dotenv/config";
-import { createAudioPlayer, createAudioResource, DiscordGatewayAdapterCreator, entersState, joinVoiceChannel, PlayerSubscription, VoiceConnectionState, VoiceConnectionStatus } from "@discordjs/voice";
+import { createAudioPlayer, createAudioResource, DiscordGatewayAdapterCreator, entersState, joinVoiceChannel, PlayerSubscription, VoiceConnectionStatus } from "@discordjs/voice";
 import { TextToSpeechClient } from "@google-cloud/text-to-speech";
 import { Guild, VoiceChannel } from "discord.js";
-import { unlink, writeFileSync } from "fs";
+import { unlink, writeFile } from "fs";
 
 export const ttsFilePath: string = (process.env.TTS_FILE_PATH) ? (process.env.TTS_FILE_PATH.endsWith('/')) ? process.env.TTS_FILE_PATH.slice(0, -1) : process.env.TTS_FILE_PATH : '';
 const ttsfilelist = new Set<string>();
@@ -46,7 +46,7 @@ export class TTS {
       return undefined;
     });
     if (!file) return;
-    this.play(channel.id, file, randomfilename).catch(() => {});
+    await this.play(channel.id, file, randomfilename).catch(() => {});
     return;
   }
 
@@ -57,29 +57,8 @@ export class TTS {
       channelId: channelID
     });
     if (!connection) return;
-
     connection.setMaxListeners(0);
-    connection.configureNetworking();
-    connection.once("stateChange", (oldState: VoiceConnectionState, newState: VoiceConnectionState) => {
-      if (
-        oldState.status === VoiceConnectionStatus.Ready 
-        && newState.status === VoiceConnectionStatus.Signalling
-      ) {
-        console.log(oldState.subscription?.connection.joinConfig.channelId);
-        console.log(newState.subscription?.connection.joinConfig);
-        const oldNetworking = Reflect.get(oldState, 'networking');
-        const newNetworking = Reflect.get(newState, 'networking');
-        const networkStateChangeHandler = (_oldNetworkState: any, newNetworkState: any) => {
-          const newUdp = Reflect.get(newNetworkState, 'udp');
-          clearInterval(newUdp?.keepAliveInterval);
-        }
-        oldNetworking?.off('stateChange', networkStateChangeHandler);
-        newNetworking?.on('stateChange', networkStateChangeHandler);
-        connection.setMaxListeners(0);
-        connection.configureNetworking();
-      }
-    });
-    
+
     try {
       await entersState(connection, VoiceConnectionStatus.Ready, 20e3);
       this.playerSubscription?.player.stop();
@@ -106,24 +85,21 @@ export class TTS {
     return;
   }
 
-  async makeTTS(fileURL: string, text: string): Promise<string | undefined> {
-    const output = await this.getText(text).catch(() => {
-      return undefined;
+  async makeTTS(fileURL: string, text: string) {
+    return new Promise<string | undefined>(async (res) => {
+      const output = await this.getText(text);
+      if (!output) return res(undefined);
+      let filename: string | undefined = `${ttsFilePath}/${fileURL}.${fileformat.fileformat}`;
+      writeFile(filename, output, {}, (err) => {
+        if (err) return res(undefined);
+        return res(filename);
+      });
     });
-    if (!output) return undefined;
-    let filename: string | undefined = `${ttsFilePath}/${fileURL}.${fileformat.fileformat}`;
-    try {
-      writeFileSync(filename, output);
-    } catch (err) {
-      filename = undefined;
-    }
-    return filename;
   }
 
   async getText(text: string) {
-    let response: any = undefined;
-    try {
-      response = await ttsClient.synthesizeSpeech({
+    return new Promise<string | Uint8Array | undefined>(async (res) => {
+      const response = await ttsClient.synthesizeSpeech({
         input: { text: text },
         voice: {
           languageCode: 'ko-KR',
@@ -139,10 +115,8 @@ export class TTS {
       }).catch(() => {
         return undefined;
       });
-      if (!response || !response[0] || !response[0].audioContent) return undefined;
-      return response[0].audioContent;
-    } catch {
-      return undefined;
-    }
+      if (!response || !response[0] || !response[0].audioContent) return res(undefined);
+      return res(response[0].audioContent);
+    });
   }
 }
