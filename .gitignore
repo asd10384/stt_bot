@@ -6,10 +6,5 @@ test*.ts
 old/
 googlettsapi.json
 sounds/
-<<<<<<< Updated upstream
-python/
-=======
 *.zip
 *.m4a
-kospeech/
->>>>>>> Stashed changes
