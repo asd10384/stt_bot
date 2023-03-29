@@ -193,6 +193,7 @@ export class STT {
 
   async say(channel: VoiceChannel, text: string) {
     await this.TTS.tts(channel, text).catch(() => {});
+    return;
   }
   
   logChannel(voiceChannel: VoiceChannel, member: GuildMember, text: string) {

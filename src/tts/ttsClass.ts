@@ -30,59 +30,63 @@ export class TTS {
   }
 
   async tts(channel: VoiceChannel | null, text: string) {
-    // text = replacetext(this.guild, text);
-    if (!channel) return;
-    
-    let randomfilename = Math.random().toString(36).replace(/0?\./g,"");
-    while (true) {
-      if (ttsfilelist.has(randomfilename)) {
-        randomfilename = Math.random().toString(36).replace(/0?\./g,"");
-      } else {
-        ttsfilelist.add(randomfilename);
-        break;
+    return new Promise<any>(async (res) => {
+      // text = replacetext(this.guild, text);
+      if (!channel) return res(undefined);
+      
+      let randomfilename = Math.random().toString(36).replace(/0?\./g,"");
+      while (true) {
+        if (ttsfilelist.has(randomfilename)) {
+          randomfilename = Math.random().toString(36).replace(/0?\./g,"");
+        } else {
+          ttsfilelist.add(randomfilename);
+          break;
+        }
       }
-    }
-    const file = await this.makeTTS(randomfilename, text).catch(() => {
-      return undefined;
+      const file = await this.makeTTS(randomfilename, text).catch(() => {
+        return undefined;
+      });
+      if (!file) return res(undefined);
+      await this.play(channel.id, file, randomfilename).catch(() => {});
+      return res(undefined);
     });
-    if (!file) return;
-    await this.play(channel.id, file, randomfilename).catch(() => {});
-    return;
   }
 
   async play(channelID: string, fileURL: string, filename: string, options?: { volume?: number }) {
-    const connection = joinVoiceChannel({
-      adapterCreator: this.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
-      guildId: this.guild.id,
-      channelId: channelID
-    });
-    if (!connection) return;
-    connection.setMaxListeners(0);
-
-    try {
-      await entersState(connection, VoiceConnectionStatus.Ready, 20e3);
-      this.playerSubscription?.player.stop();
-      const Player = createAudioPlayer();
-      Player.setMaxListeners(0);
-      const resource = createAudioResource(fileURL, {
-        inlineVolume: true
+    return new Promise<any>(async (res) => {
+      const connection = joinVoiceChannel({
+        adapterCreator: this.guild.voiceAdapterCreator as DiscordGatewayAdapterCreator,
+        guildId: this.guild.id,
+        channelId: channelID
       });
-      resource.volume?.setVolume((options && options.volume) ? options.volume : 1);
-      Player.play(resource);
-      const subscription = connection.subscribe(Player);
-      this.playerSubscription = subscription;
-    } catch {
-      this.playerSubscription = undefined;
-    }
-    setTimeout(() => {
+      if (!connection) return res(undefined);
+      connection.setMaxListeners(0);
+
       try {
-        unlink(`${ttsFilePath}/${filename}.${fileformat.fileformat}`, (err) => {
-          if (ttsfilelist.has(filename)) ttsfilelist.delete(filename);
-          if (err) return;
+        await entersState(connection, VoiceConnectionStatus.Ready, 20e3);
+        this.playerSubscription?.player.stop();
+        const Player = createAudioPlayer();
+        Player.setMaxListeners(0);
+        const resource = createAudioResource(fileURL, {
+          inlineVolume: true
         });
-      } catch (err) {}
-    }, 5000);
-    return;
+        resource.volume?.setVolume((options && options.volume) ? options.volume : 1);
+        Player.play(resource);
+        const subscription = connection.subscribe(Player);
+        this.playerSubscription = subscription;
+      } catch {
+        this.playerSubscription = undefined;
+      }
+      setTimeout(() => {
+        try {
+          unlink(`${ttsFilePath}/${filename}.${fileformat.fileformat}`, (err) => {
+            if (ttsfilelist.has(filename)) ttsfilelist.delete(filename);
+            if (err) return;
+          });
+        } catch (err) {}
+      }, 5000);
+      return res(undefined);
+    });
   }
 
   async makeTTS(fileURL: string, text: string) {
